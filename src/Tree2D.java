@@ -3,16 +3,42 @@ import java.util.List;
 
 public class Tree2D {
     private Division div;
-    private Color color;
+    private final Color color;
     private Tree2D R;
     private Tree2D L;
-    private Point topLeft;
-    private Point bottomRight;
+    private final Point topLeft;
+    private final Point bottomRight;
 
     public Tree2D(int width, int height, int nbLeafsToDivide, int minCutDimension, Variants v, List<LineData> linesData) {
         this.topLeft = new Point(0, 0);
         this.bottomRight = new Point(width, height);
         this.color = Color.WHITE;
+        this.build(nbLeafsToDivide, minCutDimension, v, linesData);
+    }
+
+    private Tree2D(Point topLeft, Point botomRight, Color color) {
+        this.topLeft = topLeft;
+        this.bottomRight = botomRight;
+        this.color = color;
+    }
+
+    private void build(int nbLeafsToDivide, int minCutDimension, Variants v, List<LineData> linesData) {
+        for (LineData line : linesData) {
+            Tree2D workingLeaf = this.minWeight();
+            Axis axis = Utils.determineAxis(v, workingLeaf.width(), workingLeaf.height());
+            this.div = new Division(axis, this.topLeft, line, this.width(), this.height());
+
+            // If line.d or line.d is null we use this.color
+            Color colorg;
+            Color colord;
+            if (line.g == null) colorg = this.color;
+            else colorg = line.g;
+
+            if (line.d == null) colord = this.color;
+            else colord = line.d;
+            workingLeaf.L = new Tree2D(topLeft, this.div.bottomRightLeftChild(this.topLeft, this.bottomRight), colorg);
+            workingLeaf.R = new Tree2D(this.div.topLeftRightChild(this.topLeft, this.bottomRight), this.bottomRight, colord);
+        }
     }
 
     private Tree2D minWeight() {
@@ -34,7 +60,7 @@ public class Tree2D {
     }
 
     private boolean isLeaf() {
-        return color != null;
+        return this.L == null && this.R == null;
     }
 
     /**
