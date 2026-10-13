@@ -42,13 +42,16 @@ public class Tree2D {
     }
 
     private Tree2D minWeight() {
-        if (color != null) return this;
+        if (this.isLeaf()) return this;
         else {
             Tree2D l = this.L.minWeight();
             Tree2D r = this.R.minWeight();
-            if (Utils.getWeight(l.width(), l.height()) < Utils.getWeight(r.width(), r.height())) return l;
-            else return r;
-            }
+            Tree2D res = Utils.minWeightValue(l, r);
+
+            if (res != null) return res;
+
+            return (Utils.highestLeftCoordinate(l.topLeft, r.topLeft) == -1) ? l : r;
+        }
     }
 
     public int width() {
