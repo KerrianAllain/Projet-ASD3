@@ -21,14 +21,14 @@ public class Utils {
         return (w * h) / Math.pow(w + h, 1.5);
     }
 
-    public static Tree2D minWeightValue(Tree2D left, Tree2D right) {
+    public static Tree2D maxWeightValue(Tree2D left, Tree2D right) {
         double rightWeight = getWeight(right.width(), right.height());
         double leftWeight = getWeight(left.width(), left.height());
 
         if (Objects.equals(leftWeight, rightWeight))
             return null;
 
-        return (leftWeight < rightWeight) ? left : right;
+        return (leftWeight > rightWeight) ? left : right;
     }
 
     public static int highestLeftCoordinate(Point p1, Point p2) {
