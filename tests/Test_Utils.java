@@ -19,8 +19,15 @@ public class Test_Utils {
         assert Objects.equals(Utils.determineAxis(Variants.B, 50, 200), Axis.Y);
     }
 
+    private static void testHighestLeftCoordinate() {
+        assert Objects.equals(Utils.highestLeftCoordinate(new Point(1, 50), new Point(50, 50)), -1);
+        assert Objects.equals(Utils.highestLeftCoordinate(new Point(1, 50), new Point(1, 75)), -1);
+        assert Objects.equals(Utils.highestLeftCoordinate(new Point(1, 50), new Point(1, 25)), 1);
+    }
+
     public static void main(String[] args) {
         testGetWeight();
         testDetermineAxis();
+        testHighestLeftCoordinate();
     }
 }

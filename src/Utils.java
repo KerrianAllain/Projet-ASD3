@@ -1,3 +1,6 @@
+
+import java.util.Objects;
+
 public class Utils {
     private static final String GREEN = "\033[32m";
     private static final String RESET = "\033[0m";
@@ -16,6 +19,26 @@ public class Utils {
      */
     public static double getWeight(int w, int h) {
         return (w * h) / Math.pow(w + h, 1.5);
+    }
+
+    public static Tree2D minWeightValue(Tree2D left, Tree2D right) {
+        double rightWeight = getWeight(right.width(), right.height());
+        double leftWeight = getWeight(left.width(), left.height());
+
+        if (Objects.equals(leftWeight, rightWeight))
+            return null;
+
+        return (leftWeight < rightWeight) ? left : right;
+    }
+
+    public static int highestLeftCoordinate(Point p1, Point p2) {
+        if (p1.x < p2.x)
+            return -1;
+
+        if (p1.x == p2.x && p1.y < p2.y)
+            return -1;
+
+        return 1;
     }
 
     /**
