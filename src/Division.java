@@ -21,10 +21,10 @@ public class Division {
     public Point bottomRightLeftChild(Point topLeft, Point bottomRight) {
         switch (this.axis) {
             case X:
-                return new Point(topLeft.x + value, bottomRight.y);
+                return new Point(value, bottomRight.y);
 
             case Y:
-                return new Point(bottomRight.x, topLeft.y + value);
+                return new Point(bottomRight.x, value);
         }
         return null;
     }
@@ -32,10 +32,10 @@ public class Division {
     public Point topLeftRightChild(Point topLeft, Point bottomRight) {
         switch (this.axis) {
             case X:
-                return new Point(topLeft.x + value, topLeft.y);
+                return new Point(value, topLeft.y);
 
             case Y:
-                return new Point(topLeft.x, topLeft.y + value);
+                return new Point(topLeft.x, value);
         }
         return null;
     }

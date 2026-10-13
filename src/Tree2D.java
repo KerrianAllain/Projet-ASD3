@@ -23,30 +23,33 @@ public class Tree2D {
     }
 
     private void build(int nbLeafsToDivide, int minCutDimension, Variants v, List<LineData> linesData) {
+        int divisions = 0;
         for (LineData line : linesData) {
-            Tree2D workingLeaf = this.minWeight();
+            if (divisions == nbLeafsToDivide) break;
+
+            Tree2D workingLeaf = this.maxWeight();
+
             Axis axis = Utils.determineAxis(v, workingLeaf.width(), workingLeaf.height());
-            this.div = new Division(axis, this.topLeft, line, this.width(), this.height());
 
-            // If line.d or line.d is null we use this.color
-            Color colorg;
-            Color colord;
-            if (line.g == null) colorg = this.color;
-            else colorg = line.g;
+            workingLeaf.div = new Division(axis, workingLeaf.topLeft, line, workingLeaf.width(), workingLeaf.height());
 
-            if (line.d == null) colord = this.color;
-            else colord = line.d;
-            workingLeaf.L = new Tree2D(topLeft, this.div.bottomRightLeftChild(this.topLeft, this.bottomRight), colorg);
-            workingLeaf.R = new Tree2D(this.div.topLeftRightChild(this.topLeft, this.bottomRight), this.bottomRight, colord);
+            // If line.d or line.d is null we use workingLeaf.color
+            Color colorg = (line.g == null) ? workingLeaf.color : line.g;
+            Color colord = (line.d == null) ? workingLeaf.color : line.d;
+
+            workingLeaf.L = new Tree2D(topLeft, workingLeaf.div.bottomRightLeftChild(workingLeaf.topLeft, workingLeaf.bottomRight), colorg);
+            workingLeaf.R = new Tree2D(workingLeaf.div.topLeftRightChild(workingLeaf.topLeft, workingLeaf.bottomRight), workingLeaf.bottomRight, colord);
+            
+            divisions++;
         }
     }
 
-    private Tree2D minWeight() {
+    private Tree2D maxWeight() {
         if (this.isLeaf()) return this;
         else {
-            Tree2D l = this.L.minWeight();
-            Tree2D r = this.R.minWeight();
-            Tree2D res = Utils.minWeightValue(l, r);
+            Tree2D l = this.L.maxWeight();
+            Tree2D r = this.R.maxWeight();
+            Tree2D res = Utils.maxWeightValue(l, r);
 
             if (res != null) return res;
 
@@ -75,8 +78,7 @@ public class Tree2D {
      */
     public Image toImage(int lineWidth) {
         Image image = new Image(this.width(), this.height());
-        this.colorImage(image, lineWidth/2, this.bottomRight.x, this.bottomRight.y);
-        return image;
+        return this.colorImage(image, lineWidth/2, this.bottomRight.x, this.bottomRight.y);
     }
 
     /**
@@ -87,30 +89,30 @@ public class Tree2D {
      * @param halfLineWidth half the width for separation lines beetween rectangles
      * @param widthI the width of the entire image
      * @param heightI the height of the entire image
+     *
+     * @return the image
      */
-    private void colorImage(Image image, int halfLineWidth, int widthI, int heightI) {
-        if (this.isLeaf()) {
-            this.L.colorImage(image, halfLineWidth, widthI, heightI);
-            this.R.colorImage(image, halfLineWidth, widthI, heightI);
+    private Image colorImage(Image image, int halfLineWidth, int widthI, int heightI) {
+        if (!this.isLeaf()) {
+            image = this.L.colorImage(image, halfLineWidth, widthI, heightI);
+            return this.R.colorImage(image, halfLineWidth, widthI, heightI);
         } else {
-            Point topLeftPoint;
-            Point bottomRightPoint;
-            // topLeftPoint
-            if (this.topLeft.equals(0, 0)) topLeftPoint = this.topLeft;
-            else {
-                if (this.topLeft.x == 0) topLeftPoint = this.topLeft.addX(halfLineWidth);
-                else if (this.topLeft.y == 0) topLeftPoint = this.topLeft.addY(halfLineWidth);
-                else topLeftPoint = this.topLeft.add(halfLineWidth);
-            }
-            // bottomRightPoint
-            if (this.bottomRight.equals(widthI, heightI)) bottomRightPoint = this.bottomRight;
-            else {
-                if (this.bottomRight.x == widthI) bottomRightPoint = this.bottomRight.subY(halfLineWidth);
-                else if (this.bottomRight.y == heightI) bottomRightPoint = this.bottomRight.subX(halfLineWidth);
-                else bottomRightPoint = this.bottomRight.sub(halfLineWidth);
-            }
-
-            image.setRectangle(topLeftPoint.x, topLeftPoint.y, bottomRightPoint.x, bottomRightPoint.y, this.color);
+            image.setRectangle(this.topLeft.x, this.bottomRight.x, this.topLeft.y, this.bottomRight.y, this.color);
+            return image;
         }
+    }
+
+    @Override
+    public String toString() {
+        String res = new String();
+
+        if (this.L != null) res += "( " + this.L.toString() + " )";
+
+        if (div != null) res += "( " + this.div.axis + ", " + this.div.value + " )";
+        else res += "( " + this.color.getRed() + ", " + this.color.getGreen() + ", " + this.color.getBlue() + " )";
+
+        if (this.R != null) res += "( " + this.R.toString() + " )";
+
+        return res;
     }
 }
