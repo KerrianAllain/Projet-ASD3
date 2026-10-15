@@ -1,4 +1,3 @@
-
 /**
  * All Utils functions are in {@code O(1)} time.
  * As there is only comparisons and calculations.
@@ -9,7 +8,7 @@ public class Utils {
     private static final String RED = "\033[31m";
 
     /**
-     * Determines the Axis to divide on, considering the variant used.
+     * Determines the Axis to divide on based on the variant and leaf dimensions.
      *
      * @param v The variant used for the segmentation.
      * @param w The width of the leaf.
@@ -17,23 +16,16 @@ public class Utils {
      * @return The axis to divide on.
      */
     public static Axis determineAxis(Variant v, int width, int height) {
-        double h = (float) height;
-        double w = (float) width;
+        double inverseRatio = (double) height / width;
+        double ratio = (double) width / height;
 
-        switch (v) {
-            case B:
-                if ((w / h) > 1)
-                    return Axis.X;
-                return Axis.Y;
+        if (v == Variant.B)
+            return (ratio > 1) ? Axis.X : Axis.Y;
 
-            case A:
-                if ((w / h) > 2 || (h / w) <= 2)
-                    return Axis.X;
-                return Axis.Y;
+        if (v == Variant.A)
+            return (ratio > 2 || inverseRatio <= 2) ? Axis.X : Axis.Y;
 
-            default:
-                throw new IllegalArgumentException("Invalid variant provided.");
-        }
+        throw new IllegalArgumentException("Unsupported variant: " + v + ".");
     }
 
     /**
@@ -46,13 +38,12 @@ public class Utils {
      * @return -1 if the first point matches the previous contract, 1 otherwise.
      */
     public static int highestLeftCoordinate(Point p1, Point p2) {
-        if (p1.x < p2.x)
-            return -1;
+        int xCompare = Integer.compare(p1.x, p2.x);
+        if (xCompare != 0)
+            return (xCompare < 0) ? -1 : 1;
 
-        if (p1.x == p2.x && p1.y < p2.y)
-            return -1;
-
-        return 1;
+        int yCompare = Integer.compare(p1.y, p2.y);
+        return yCompare < 0 ? -1 : 1;
     }
 
     /**
@@ -66,7 +57,7 @@ public class Utils {
         double rightWeight = getWeight(right.width(), right.height());
         double leftWeight = getWeight(left.width(), left.height());
 
-        if (leftWeight == rightWeight)
+        if (Double.compare(leftWeight, rightWeight) == 0)
             return null;
 
         return (leftWeight > rightWeight) ? left : right;

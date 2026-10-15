@@ -2,41 +2,37 @@ public class Division {
     public final Axis axis;
     public final int value;
 
-    public Division(Axis axis, Point coordinates, LineData line, int width, int height) {
+    /**
+     * Determines the axis and the position to divide the segment.
+     *
+     * @param axis    The axis to use for the division.
+     * @param topLeft The top left coordinates.
+     * @param line    The line data to access ratios {@code p} and {@code q}.
+     * @param tree    The target Tree2D instance.
+     */
+    public Division(Axis axis, Point topLeft, LineData line, Tree2D tree) {
+        int axisY = topLeft.y + (int) (tree.height() * line.q);
+        int axisX = topLeft.x + (int) (tree.width() * line.p);
+
+        this.value = (axis == Axis.X) ? axisX : axisY;
         this.axis = axis;
-        switch (axis) {
-            case X:
-                this.value = coordinates.x + (int) (width * line.p);
-                break;
-
-            case Y:
-                this.value = coordinates.y + (int) (height * line.q);
-                break;
-
-            default:
-                throw new IllegalArgumentException("Invalid variant provided.");
-        }
     }
 
-    public Point bottomRightLeftChild(Point topLeft, Point bottomRight) {
-        switch (this.axis) {
-            case X:
-                return new Point(value, bottomRight.y);
-
-            case Y:
-                return new Point(bottomRight.x, value);
-        }
-        return null;
+    /**
+     * Determines the Point to use for the division.
+     *
+     * @param childType   The child type to determine.
+     * @param topLeft     The top left Point.
+     * @param bottomRight The bottom right Point.
+     * @return The calculated split Point.
+     */
+    public Point getSplitPoint(ChildType childType, Point topLeft, Point bottomRight) {
+        Point target = (childType == ChildType.LEFT) ? bottomRight : topLeft;
+        return this.axis.withValue(target, this.value);
     }
 
-    public Point topLeftRightChild(Point topLeft, Point bottomRight) {
-        switch (this.axis) {
-            case X:
-                return new Point(value, topLeft.y);
-
-            case Y:
-                return new Point(topLeft.x, value);
-        }
-        return null;
+    @Override
+    public String toString() {
+        return this.axis + ", " + this.value;
     }
 }

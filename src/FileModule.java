@@ -1,13 +1,13 @@
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class FileModule {
-    private static final String PROJECT_DIRECTORY = "AllainAllain/";
-    private static final String TARGET = PROJECT_DIRECTORY + "target/";
+    private static final Path TARGET_DIR = Paths.get("AllainAllain", "target");
 
     /**
-     * Saves an ImagePNG to a PNG file to the TARGET directory.
-     * The image is saved to a sub-folder to make it clearer.
+     * Saves an ImagePNG to a PNG file in a subfolder inside the TARGET directory.
      *
      * <p>
      * <b>Complexity:</b> depends on {@link Image#save(String)}.
@@ -17,14 +17,15 @@ public class FileModule {
      * @param image    The image to save.
      */
     public static void saveToPNG(String filename, Image image) {
-        String path = TARGET + filename + "/" + filename + ".png";
+        Path outputDirectory = TARGET_DIR.resolve(filename);
+        Path targetPath = outputDirectory.resolve(filename + ".png");
 
-        if (!createTargetDirectory(filename))
+        if (!createTargetDirectory(outputDirectory))
             return;
 
         try {
-            image.save(path);
-            Utils.logSuccess(path + " saved successfully.");
+            image.save(targetPath.toString());
+            Utils.logSuccess(targetPath + " saved successfully.");
         } catch (IOException exception) {
             Utils.logError("An IO exception occurred while saving the image: " + exception.getMessage());
         }
@@ -37,15 +38,17 @@ public class FileModule {
      * <b>Complexity: O(1)</b>.
      * </p>
      *
-     * @param path The path of the directory to create.
+     * @param directoryPath The path of the directory to create.
+     * @return {@code true} if the directory exists or was created, {@code false}
+     *         otherwise.
      */
-    private static boolean createTargetDirectory(String path) {
-        File targetDirectory = new File(TARGET + path);
-
-        if (targetDirectory.isDirectory() || targetDirectory.mkdirs())
+    private static boolean createTargetDirectory(Path directoryPath) {
+        try {
+            Files.createDirectories(directoryPath);
             return true;
-
-        Utils.logError("Unable to create directory: " + path);
-        return false;
+        } catch (IOException exception) {
+            Utils.logError("Unable to create directory: " + directoryPath);
+            return false;
+        }
     }
 }

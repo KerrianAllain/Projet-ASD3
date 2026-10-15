@@ -2,19 +2,20 @@ import java.awt.Color;
 
 public class Parser {
     /**
-     * Parses a Color value, that must be either "m", "r", "b", "n", "w" or "j".
+     * Parses a Color value ("m", "r", "b", "n", "w" or "j").
      *
      * <p>
      * <b>Complexity: O(n)</b>, where {@code n} is the length of the value.
      * </p>
      *
-     * @param value The value to parse.
-     * @return The parsed Color.
-     *
-     * @throws IllegalArgumentException If the value is not one of the above.
+     * @param value The character string value representing a color.
+     * @return The corresponding {@link Color}, or {@code null} if "m".
      */
     public static Color parseColor(String value) {
         try {
+            if (value == null)
+                throw new IllegalArgumentException("Color value cannot be null.");
+
             switch (value) {
                 case "m":
                     return null;
@@ -30,7 +31,7 @@ public class Parser {
                     return Color.YELLOW;
 
                 default:
-                    throw new IllegalArgumentException("Invalid color provided.");
+                    throw new IllegalArgumentException("Invalid color character.");
             }
         } catch (IllegalArgumentException exception) {
             Utils.logException(exception);
@@ -40,21 +41,21 @@ public class Parser {
     }
 
     /**
-     * Parses a coordinate value, that must be within 0.2 and 0.8 bounds.
+     * Parses a coordinate value bounded between 0.2 and 0.8 included.
      *
      * <p>
      * <b>Complexity: O(n)</b>, where {@code n} is the length of the value.
      * </p>
      *
-     * @param value The value to parse.
-     * @return The parsed coordinate.
+     * @param value The coordinate string to parse.
+     * @return The parsed double coordinate.
      */
     public static double parseCoordinate(String value) {
         try {
             double coordinate = Double.parseDouble(value);
 
             if (coordinate < 0.2 || coordinate > 0.8)
-                throw new IllegalArgumentException("Invalid coordinate.");
+                throw new IllegalArgumentException("Coordinate out of bounds [0.2; 0.8].");
 
             return coordinate;
         } catch (IllegalArgumentException exception) {
@@ -65,10 +66,10 @@ public class Parser {
     }
 
     /**
-     * Parses an integer parameter from a string.
+     * Parses a strictly positive integer parameter.
      *
-     * @param value       The value to parse.
-     * @param description The description of the value.
+     * @param value       The string value to parse.
+     * @param description Parameter name for error reporting.
      * @return The parsed integer.
      */
     public static int parseIntParameter(String value, String description) {
@@ -86,16 +87,18 @@ public class Parser {
         }
     }
 
+    /**
+     * Parses a variant value.
+     *
+     * @param value The variant string to parse.
+     * @return The corresponding {@link Variant}.
+     */
     public static Variant parseVariant(String value) {
         try {
-            switch (value) {
-                case "A":
-                    return Variant.A;
-                case "B":
-                    return Variant.B;
-                default:
-                    throw new IllegalArgumentException("Invalid variant `" + value + "`.");
-            }
+            if (value == null)
+                throw new IllegalArgumentException("Variant cannot be null.");
+
+            return Variant.valueOf(value);
         } catch (IllegalArgumentException exception) {
             Utils.logException(exception);
             System.exit(1);

@@ -2,66 +2,182 @@ import java.awt.Color;
 import java.util.List;
 
 public class Tree2D {
-    private Division div;
-    private final Color color;
-    private Tree2D R;
-    private Tree2D L;
-    private final Point topLeft;
     private final Point bottomRight;
+    private final Point topLeft;
+    private final Color color;
 
-    public Tree2D(int width, int height, int nbLeafsToDivide, int minCutDimension, Variant v, List<LineData> linesData) {
-        this.topLeft = new Point(0, 0);
+    private Division division;
+    private Tree2D right;
+    private Tree2D left;
+
+    public Tree2D(
+            int width, int height,
+            int nbLeafsToDivide, int minCutDimension,
+            Variant v, List<LineData> linesData) {
         this.bottomRight = new Point(width, height);
+        this.topLeft = new Point(0, 0);
         this.color = Color.WHITE;
+
         this.build(nbLeafsToDivide, minCutDimension, v, linesData);
     }
 
-    private Tree2D(Point topLeft, Point botomRight, Color color) {
+    private Tree2D(Point topLeft, Point bottomRight, Color color) {
+        this.bottomRight = bottomRight;
         this.topLeft = topLeft;
-        this.bottomRight = botomRight;
         this.color = color;
     }
 
-    private void build(int nbLeafsToDivide, int minCutDimension, Variant v, List<LineData> linesData) {
+    private void build(int nbLeafsToDivide, int minCutDimension, Variant v, List<LineData> lines) {
         int divisions = 0;
-        for (LineData line : linesData) {
-            if (divisions == nbLeafsToDivide) break;
 
-            Tree2D workingLeaf = this.maxWeight(minCutDimension);
+        for (LineData line : lines) {
+            if (divisions == nbLeafsToDivide)
+                break;
 
-            System.out.println(" " + workingLeaf.topLeft.x + ", " + workingLeaf.topLeft.y);
-            System.out.println(" " + workingLeaf.bottomRight.x + ", " + workingLeaf.bottomRight.y);
+            // Determine the leaf of maximum weight.
+            Tree2D workingLeaf = this.leafOfMaximumWeight(minCutDimension);
+            if (workingLeaf == null || workingLeaf.width() < minCutDimension || workingLeaf.height() < minCutDimension)
+                break;
 
+            // Determine the axis to use for the leaf division.
             Axis axis = Utils.determineAxis(v, workingLeaf.width(), workingLeaf.height());
+            workingLeaf.division = new Division(axis, workingLeaf.topLeft, line, workingLeaf);
 
-            workingLeaf.div = new Division(axis, workingLeaf.topLeft, line, workingLeaf.width(), workingLeaf.height());
-
-            // If line.d or line.d is null we use workingLeaf.color
-            Color colorg = (line.g == null) ? workingLeaf.color : line.g;
-            Color colord = (line.d == null) ? workingLeaf.color : line.d;
-
-            workingLeaf.L = new Tree2D(workingLeaf.topLeft, workingLeaf.div.bottomRightLeftChild(workingLeaf.topLeft, workingLeaf.bottomRight), colorg);
-            workingLeaf.R = new Tree2D(workingLeaf.div.topLeftRightChild(workingLeaf.topLeft, workingLeaf.bottomRight), workingLeaf.bottomRight, colord);
+            // Build the leaf children for the next iteration.
+            workingLeaf.left = workingLeaf.buildLeaf(line.g, ChildType.LEFT);
+            workingLeaf.right = workingLeaf.buildLeaf(line.d, ChildType.RIGHT);
 
             divisions++;
         }
     }
 
-    private Tree2D maxWeight(int minCutDimension) {
-        if (this.isLeaf()) return this;
-        else {
-            Tree2D l = this.L.maxWeight(minCutDimension);
-            Tree2D r = this.R.maxWeight(minCutDimension);
+    /**
+     * Builds a child Tree2D leaf based on the split geometry and child type.
+     *
+     * @param childColor Specified color for the child.
+     * @param childType  Whether this is a LEFT or RIGHT child node.
+     * @return A new Tree2D instance representing the split child leaf.
+     */
+    private Tree2D buildLeaf(Color childColor, ChildType childType) {
+        Point splitPoint = this.division.getSplitPoint(childType, this.topLeft, this.bottomRight);
+        Point nextBottomRight = (childType == ChildType.RIGHT) ? this.bottomRight : splitPoint;
+        Point nextTopLeft = (childType == ChildType.LEFT) ? this.topLeft : splitPoint;
+        Color nextColor = (childColor == null) ? this.color : childColor;
 
-            if (l.width() < minCutDimension || l.height() < minCutDimension) return r;
-            if (r.width() < minCutDimension || r.height() < minCutDimension) return l;
+        return new Tree2D(nextTopLeft, nextBottomRight, nextColor);
+    }
 
-            Tree2D res = Utils.maxWeightValue(l, r);
+    /**
+     * @return {@code true} if the tree has no child, {@code false} otherwise.
+     */
+    private boolean isLeaf() {
+        return this.left == null && this.right == null;
+    }
 
-            if (res != null) return res;
-
-            return (Utils.highestLeftCoordinate(l.topLeft, r.topLeft) == -1) ? l : r;
+    /**
+     * Determines the leaf that has the maximum weight and respects minCutDimension.
+     *
+     * @param minCutDimension Minimum allowed width and height for a cut.
+     * @return The leaf with the maximum weight, or null if no valid leaf exists.
+     */
+    private Tree2D leafOfMaximumWeight(int minCutDimension) {
+        if (this.isLeaf()) {
+            boolean isValid = this.width() >= minCutDimension && this.height() >= minCutDimension;
+            return isValid ? this : null;
         }
+
+        Tree2D leftMaximum = (this.left != null) ? this.left.leafOfMaximumWeight(minCutDimension) : null;
+        Tree2D rightMaximum = (this.right != null) ? this.right.leafOfMaximumWeight(minCutDimension) : null;
+
+        // If one side is not valid (null), return the other.
+        if (leftMaximum == null)
+            return rightMaximum;
+        if (rightMaximum == null)
+            return leftMaximum;
+
+        // If both sides are valid, compare them together.
+        Tree2D tree = Utils.maxWeightValue(leftMaximum, rightMaximum);
+        if (tree != null)
+            return tree;
+
+        // Determine the leaf of max weight from their coordinates.
+        int comparison = Utils.highestLeftCoordinate(leftMaximum.topLeft, rightMaximum.topLeft);
+        return (comparison == -1) ? leftMaximum : rightMaximum;
+    }
+
+    /**
+     * Builds the image representation of the tree.
+     *
+     * <p>
+     * <b>Complexity: O(n)</b>, where {@code n} is the number of pixels.
+     * </p>
+     *
+     * @param lineWidth The line width of separation between rectangles.
+     * @return The resulting image.
+     */
+    public Image toImage(int lineWidth) {
+        Image image = new Image(this.width(), this.height());
+        return this.colorImage(image, lineWidth);
+    }
+
+    /**
+     * Colors an image a rectangle at a time.
+     *
+     * <p>
+     * <b>Complexity: O(n)</b> where {@code n} is the number of pixels.
+     * </p>
+     *
+     * @param image     The image to progressively color.
+     * @param lineWidth The line width of separation between rectangles.
+     * @return The colored image.
+     */
+    private Image colorImage(Image image, int lineWidth) {
+        // The tree is a leaf so we can color its section.
+        if (this.isLeaf()) {
+            image.setRectangle(this.topLeft.x, this.bottomRight.x, this.topLeft.y, this.bottomRight.y, this.color);
+            return image;
+        }
+
+        // Colorize its children if they are not null.
+        image = (this.left == null) ? image : this.left.colorImage(image, lineWidth);
+        image = (this.right == null) ? image : this.right.colorImage(image, lineWidth);
+
+        // Draw a line of separation if the lineWidth is higher than 0.
+        if (lineWidth > 0 && this.division != null)
+            this.drawSeparationLine(image, lineWidth);
+
+        return image;
+    }
+
+    /**
+     * Draws a line of separation between rectangles.
+     *
+     * @param image     The image to add a separation line.
+     * @param lineWidth The width of the separation line.
+     */
+    private void drawSeparationLine(Image image, int lineWidth) {
+        Point start, end;
+        int halfWidth = lineWidth / 2;
+        int restWidth = lineWidth - halfWidth;
+
+        switch (this.division.axis) {
+            case X:
+                start = new Point(this.division.value - halfWidth, this.topLeft.y);
+                end = new Point(this.division.value + restWidth, this.bottomRight.y);
+                break;
+
+            case Y:
+                start = new Point(this.topLeft.x, this.division.value - halfWidth);
+                end = new Point(this.bottomRight.x, this.division.value + restWidth);
+                break;
+
+            default:
+                start = this.topLeft;
+                end = this.bottomRight;
+                break;
+        }
+
+        image.setRectangle(start.x, end.x, start.y, end.y, Color.BLACK);
     }
 
     public int width() {
@@ -72,73 +188,28 @@ public class Tree2D {
         return this.bottomRight.y - this.topLeft.y;
     }
 
-    private boolean isLeaf() {
-        return this.L == null && this.R == null;
-    }
-
-    /**
-     * Create the image represented by the tree
-     * @implNote O(n), n the number of pixels
-     * <p>
-     * @param lineWidth the width for separation lines beetween rectangles
-     * @return the image generated
-     */
-    public Image toImage(int lineWidth) {
-        Image image = new Image(this.width(), this.height());
-        return this.colorImage(image, lineWidth, this.bottomRight.x, this.bottomRight.y);
-    }
-
-    /**
-     * Color an image recursively
-     * @implNote O(n), n the number of pixels
-     * <p>
-     * @param image the image that we are constructing
-     * @param lineWidth the width for separation lines beetween rectangles
-     * @param widthI the width of the entire image
-     * @param heightI the height of the entire image
-     *
-     * @return the image
-     */
-    private Image colorImage(Image image, int lineWidth, int widthI, int heightI) {
-        if (!this.isLeaf()) {
-            image = this.L.colorImage(image, lineWidth, widthI, heightI);
-            image = this.R.colorImage(image, lineWidth, widthI, heightI);
-            Point start, end;
-            switch (this.div.axis) {
-                case X:
-                    start = new Point(this.div.value - (int) lineWidth / 2, this.topLeft.y);
-                    end = new Point(this.div.value + (lineWidth - (int) lineWidth / 2), this.bottomRight.y);
-                    break;
-
-                case Y:
-                    start = new Point(this.topLeft.x, this.div.value - (int) lineWidth / 2);
-                    end = new Point(this.bottomRight.x, this.div.value + (lineWidth - (int) lineWidth / 2));
-                    break;
-
-                default:
-                    start = this.topLeft;
-                    end = this.bottomRight;
-                    break;
-            }
-            image.setRectangle(start.x, end.x, start.y, end.y, Color.BLACK);
-            return image;
-        } else {
-            image.setRectangle(this.topLeft.x, this.bottomRight.x, this.topLeft.y, this.bottomRight.y, this.color);
-            return image;
-        }
-    }
-
     @Override
     public String toString() {
-        String res = new String();
+        StringBuilder sb = new StringBuilder();
 
-        if (this.L != null) res += "( " + this.L.toString() + " )";
+        if (this.left != null)
+            sb.append("( ").append(this.left).append(" )");
 
-        if (div != null) res += "( " + this.div.axis + ", " + this.div.value + " )";
-        else res += "( " + this.color.getRed() + ", " + this.color.getGreen() + ", " + this.color.getBlue() + " )";
+        Object content = (division != null) ? this.division : this.formatColor();
+        sb.append("( ").append(content).append(" )");
 
-        if (this.R != null) res += "( " + this.R.toString() + " )";
+        if (this.right != null)
+            sb.append("( ").append(this.right).append(" )");
 
-        return res;
+        return sb.toString();
+    }
+
+    /**
+     * Formats the leaf color to its R, G, B representation.
+     *
+     * @return The formatted color.
+     */
+    private String formatColor() {
+        return this.color.getRed() + ", " + this.color.getGreen() + ", " + this.color.getBlue();
     }
 }

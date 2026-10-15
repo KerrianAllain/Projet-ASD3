@@ -21,10 +21,12 @@ public class LineData {
 
     @Override
     public String toString() {
-        return String.valueOf(k) + SEPARATOR +
-                String.valueOf(p) + SEPARATOR +
-                String.valueOf(q) + SEPARATOR +
-                String.valueOf(g) + SEPARATOR +
-                String.valueOf(d);
+        return String.join(
+                SEPARATOR,
+                String.valueOf(k),
+                String.valueOf(p),
+                String.valueOf(q),
+                String.valueOf(g),
+                String.valueOf(d));
     }
 }

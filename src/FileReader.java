@@ -1,15 +1,16 @@
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FileReader {
-    private final File file;
+    private final Path filePath;
 
     public FileReader(String path) {
-        this.file = this.tryLoadFile(path);
+        this.filePath = this.tryLoadFile(path);
     }
 
     /**
@@ -22,15 +23,18 @@ public class FileReader {
      * @param path The path to the file to load.
      * @return The loaded file.
      */
-    private File tryLoadFile(String path) {
+    private Path tryLoadFile(String path) {
         try {
-            File pathFile = new File(path);
+            if (path == null)
+                throw new IllegalArgumentException("File path cannot be null.");
 
-            if (!pathFile.isFile() || !pathFile.getName().contains(".txt"))
-                throw new FileNotFoundException("Path: " + path + " does not lead to a valid text file.");
+            Path file = Paths.get(path);
 
-            return pathFile;
-        } catch (FileNotFoundException | NullPointerException exception) {
+            if (!Files.isRegularFile(file) || !file.getFileName().toString().endsWith(".txt"))
+                throw new IllegalArgumentException("Path: " + path + " is not a valid text file.");
+
+            return file;
+        } catch (IllegalArgumentException exception) {
             Utils.logException(exception);
             System.exit(1);
             return null;
@@ -49,11 +53,12 @@ public class FileReader {
     public List<LineData> readFile() {
         List<LineData> content = new ArrayList<>();
 
-        try (BufferedReader br = new BufferedReader(new java.io.FileReader(file))) {
+        try (BufferedReader br = Files.newBufferedReader(this.filePath)) {
             String line;
 
             while ((line = br.readLine()) != null)
-                content.add(new LineData(line));
+                if (!line.trim().isEmpty())
+                    content.add(new LineData(line));
 
             return content;
         } catch (IOException | IllegalArgumentException exception) {
