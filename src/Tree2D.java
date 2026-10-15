@@ -9,7 +9,7 @@ public class Tree2D {
     private final Point topLeft;
     private final Point bottomRight;
 
-    public Tree2D(int width, int height, int nbLeafsToDivide, int minCutDimension, Variants v, List<LineData> linesData) {
+    public Tree2D(int width, int height, int nbLeafsToDivide, int minCutDimension, Variant v, List<LineData> linesData) {
         this.topLeft = new Point(0, 0);
         this.bottomRight = new Point(width, height);
         this.color = Color.WHITE;
@@ -22,12 +22,15 @@ public class Tree2D {
         this.color = color;
     }
 
-    private void build(int nbLeafsToDivide, int minCutDimension, Variants v, List<LineData> linesData) {
+    private void build(int nbLeafsToDivide, int minCutDimension, Variant v, List<LineData> linesData) {
         int divisions = 0;
         for (LineData line : linesData) {
             if (divisions == nbLeafsToDivide) break;
 
-            Tree2D workingLeaf = this.maxWeight();
+            Tree2D workingLeaf = this.maxWeight(minCutDimension);
+
+            System.out.println(" " + workingLeaf.topLeft.x + ", " + workingLeaf.topLeft.y);
+            System.out.println(" " + workingLeaf.bottomRight.x + ", " + workingLeaf.bottomRight.y);
 
             Axis axis = Utils.determineAxis(v, workingLeaf.width(), workingLeaf.height());
 
@@ -37,18 +40,22 @@ public class Tree2D {
             Color colorg = (line.g == null) ? workingLeaf.color : line.g;
             Color colord = (line.d == null) ? workingLeaf.color : line.d;
 
-            workingLeaf.L = new Tree2D(topLeft, workingLeaf.div.bottomRightLeftChild(workingLeaf.topLeft, workingLeaf.bottomRight), colorg);
+            workingLeaf.L = new Tree2D(workingLeaf.topLeft, workingLeaf.div.bottomRightLeftChild(workingLeaf.topLeft, workingLeaf.bottomRight), colorg);
             workingLeaf.R = new Tree2D(workingLeaf.div.topLeftRightChild(workingLeaf.topLeft, workingLeaf.bottomRight), workingLeaf.bottomRight, colord);
-            
+
             divisions++;
         }
     }
 
-    private Tree2D maxWeight() {
+    private Tree2D maxWeight(int minCutDimension) {
         if (this.isLeaf()) return this;
         else {
-            Tree2D l = this.L.maxWeight();
-            Tree2D r = this.R.maxWeight();
+            Tree2D l = this.L.maxWeight(minCutDimension);
+            Tree2D r = this.R.maxWeight(minCutDimension);
+
+            if (l.width() < minCutDimension || l.height() < minCutDimension) return r;
+            if (r.width() < minCutDimension || r.height() < minCutDimension) return l;
+
             Tree2D res = Utils.maxWeightValue(l, r);
 
             if (res != null) return res;
@@ -78,7 +85,7 @@ public class Tree2D {
      */
     public Image toImage(int lineWidth) {
         Image image = new Image(this.width(), this.height());
-        return this.colorImage(image, lineWidth/2, this.bottomRight.x, this.bottomRight.y);
+        return this.colorImage(image, lineWidth, this.bottomRight.x, this.bottomRight.y);
     }
 
     /**
@@ -86,16 +93,35 @@ public class Tree2D {
      * @implNote O(n), n the number of pixels
      * <p>
      * @param image the image that we are constructing
-     * @param halfLineWidth half the width for separation lines beetween rectangles
+     * @param lineWidth the width for separation lines beetween rectangles
      * @param widthI the width of the entire image
      * @param heightI the height of the entire image
      *
      * @return the image
      */
-    private Image colorImage(Image image, int halfLineWidth, int widthI, int heightI) {
+    private Image colorImage(Image image, int lineWidth, int widthI, int heightI) {
         if (!this.isLeaf()) {
-            image = this.L.colorImage(image, halfLineWidth, widthI, heightI);
-            return this.R.colorImage(image, halfLineWidth, widthI, heightI);
+            image = this.L.colorImage(image, lineWidth, widthI, heightI);
+            image = this.R.colorImage(image, lineWidth, widthI, heightI);
+            Point start, end;
+            switch (this.div.axis) {
+                case X:
+                    start = new Point(this.div.value - (int) lineWidth / 2, this.topLeft.y);
+                    end = new Point(this.div.value + (lineWidth - (int) lineWidth / 2), this.bottomRight.y);
+                    break;
+
+                case Y:
+                    start = new Point(this.topLeft.x, this.div.value - (int) lineWidth / 2);
+                    end = new Point(this.bottomRight.x, this.div.value + (lineWidth - (int) lineWidth / 2));
+                    break;
+
+                default:
+                    start = this.topLeft;
+                    end = this.bottomRight;
+                    break;
+            }
+            image.setRectangle(start.x, end.x, start.y, end.y, Color.BLACK);
+            return image;
         } else {
             image.setRectangle(this.topLeft.x, this.bottomRight.x, this.topLeft.y, this.bottomRight.y, this.color);
             return image;

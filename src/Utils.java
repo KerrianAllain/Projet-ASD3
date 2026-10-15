@@ -1,4 +1,3 @@
-import java.util.Objects;
 
 /**
  * All Utils functions are in {@code O(1)} time.
@@ -17,14 +16,17 @@ public class Utils {
      * @param h The height of the leaf.
      * @return The axis to divide on.
      */
-    public static Axis determineAxis(Variant v, int w, int h) {
+    public static Axis determineAxis(Variant v, int width, int height) {
+        double h = (float) height;
+        double w = (float) width;
+
         switch (v) {
-            case A:
+            case B:
                 if ((w / h) > 1)
                     return Axis.X;
                 return Axis.Y;
 
-            case B:
+            case A:
                 if ((w / h) > 2 || (h / w) <= 2)
                     return Axis.X;
                 return Axis.Y;
@@ -64,7 +66,7 @@ public class Utils {
         double rightWeight = getWeight(right.width(), right.height());
         double leftWeight = getWeight(left.width(), left.height());
 
-        if (Objects.equals(leftWeight, rightWeight))
+        if (leftWeight == rightWeight)
             return null;
 
         return (leftWeight > rightWeight) ? left : right;
