@@ -47,11 +47,11 @@ public class Utils {
     }
 
     /**
-     * Determines the maximum weight value of two Tree2D.
+     * Determines the Tree2D having the maximum weight value between two Tree2D.
      *
      * @param left  The left Tree2D.
      * @param right The right Tree2D.
-     * @return The tree with the highest weight.
+     * @return The tree with the highest weight or {@code null} if their weight values are equals.
      */
     public static Tree2D maxWeightValue(Tree2D left, Tree2D right) {
         double rightWeight = getWeight(right.width(), right.height());
@@ -65,10 +65,6 @@ public class Utils {
 
     /**
      * Determines the weight of the leaf.
-     *
-     * <p>
-     * <b>Complexity: O(1)</b>.
-     * </p>
      *
      * @param w The width of the leaf.
      * @param h The height of the leaf.

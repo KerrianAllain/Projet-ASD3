@@ -138,12 +138,12 @@ public class Tree2D {
             return image;
         }
 
-        // Colorize its children if they are not null.
-        image = (this.left == null) ? image : this.left.colorImage(image, lineWidth);
-        image = (this.right == null) ? image : this.right.colorImage(image, lineWidth);
+        // Colorize its children.
+        image = this.left.colorImage(image, lineWidth);
+        image = this.right.colorImage(image, lineWidth);
 
         // Draw a line of separation if the lineWidth is higher than 0.
-        if (lineWidth > 0 && this.division != null)
+        if (lineWidth > 0)
             this.drawSeparationLine(image, lineWidth);
 
         return image;
