@@ -5,6 +5,10 @@ public class Division {
     /**
      * Determines the axis and the position to divide the segment.
      *
+     * <p>
+     * <b>Complexity: O(1)</b>.
+     * </p>
+     *
      * @param axis    The axis to use for the division.
      * @param topLeft The top left coordinates.
      * @param line    The line data to access ratios {@code p} and {@code q}.
@@ -20,6 +24,10 @@ public class Division {
 
     /**
      * Determines the Point to use for the division.
+     *
+     * <p>
+     * <b>Complexity: O(1)</b>.
+     * </p>
      *
      * @param childType   The child type to determine.
      * @param topLeft     The top left Point.

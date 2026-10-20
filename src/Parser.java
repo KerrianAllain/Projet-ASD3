@@ -68,6 +68,10 @@ public class Parser {
     /**
      * Parses a strictly positive integer parameter.
      *
+     * <p>
+     * <b>Complexity: O(n)</b>, where {@code n} is the length of the string.
+     * </p>
+     *
      * @param value       The string value to parse.
      * @param description Parameter name for error reporting.
      * @return The parsed integer.
@@ -89,6 +93,10 @@ public class Parser {
 
     /**
      * Parses a variant value.
+     *
+     * <p>
+     * <b>Complexity: O(n)</b>, where {@code n} is the length of the string.
+     * </p>
      *
      * @param value The variant string to parse.
      * @return The corresponding {@link Variant}.

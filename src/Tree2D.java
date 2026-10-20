@@ -12,13 +12,13 @@ public class Tree2D {
 
     public Tree2D(
             int width, int height,
-            int nbLeafsToDivide, int minCutDimension,
+            int nbLeavesToDivide, int minCutDimension,
             Variant v, List<LineData> linesData) {
         this.bottomRight = new Point(width, height);
         this.topLeft = new Point(0, 0);
         this.color = Color.WHITE;
 
-        this.build(nbLeafsToDivide, minCutDimension, v, linesData);
+        this.build(nbLeavesToDivide, minCutDimension, v, linesData);
     }
 
     private Tree2D(Point topLeft, Point bottomRight, Color color) {
@@ -27,23 +27,34 @@ public class Tree2D {
         this.color = color;
     }
 
-    private void build(int nbLeafsToDivide, int minCutDimension, Variant v, List<LineData> lines) {
+    /**
+     * Builds the Tree2D from the given data.
+     *
+     * <p>
+     * <b>Complexity: Theta(n * m)</b>, where {@code n} is the number of lines to
+     * process, and {@code m} is the complexity of
+     * {@link Tree2D#leafOfMaximumWeight(int)}.
+     * </p>
+     *
+     * @param nbLeavesToDivide The maximum number of leaves authorized.
+     * @param minCutDimension  The minimal square cut dimension.
+     * @param v                The variant used to represent the Tree2D.
+     * @param lines            The list of lines from the source file.
+     */
+    private void build(int nbLeavesToDivide, int minCutDimension, Variant v, List<LineData> lines) {
         int divisions = 0;
 
         for (LineData line : lines) {
-            if (divisions == nbLeafsToDivide)
+            if (divisions == nbLeavesToDivide)
                 break;
 
-            // Determine the leaf of maximum weight.
             Tree2D workingLeaf = this.leafOfMaximumWeight(minCutDimension);
             if (workingLeaf == null || workingLeaf.width() < minCutDimension || workingLeaf.height() < minCutDimension)
                 break;
 
-            // Determine the axis to use for the leaf division.
             Axis axis = Utils.determineAxis(v, workingLeaf.width(), workingLeaf.height());
             workingLeaf.division = new Division(axis, workingLeaf.topLeft, line, workingLeaf);
 
-            // Build the leaf children for the next iteration.
             workingLeaf.left = workingLeaf.buildLeaf(line.g, ChildType.LEFT);
             workingLeaf.right = workingLeaf.buildLeaf(line.d, ChildType.RIGHT);
 
@@ -53,6 +64,10 @@ public class Tree2D {
 
     /**
      * Builds a child Tree2D leaf based on the split geometry and child type.
+     *
+     * <p>
+     * <b>Complexity: O(1)</b>.
+     * </p>
      *
      * @param childColor Specified color for the child.
      * @param childType  Whether this is a LEFT or RIGHT child node.
@@ -77,6 +92,10 @@ public class Tree2D {
     /**
      * Determines the leaf that has the maximum weight and respects minCutDimension.
      *
+     * <p>
+     * <b>Complexity: O(n)</b>, where {@code n} is the number of nodes.
+     * </p>
+     *
      * @param minCutDimension Minimum allowed width and height for a cut.
      * @return The leaf with the maximum weight, or null if no valid leaf exists.
      */
@@ -89,18 +108,15 @@ public class Tree2D {
         Tree2D leftMaximum = (this.left != null) ? this.left.leafOfMaximumWeight(minCutDimension) : null;
         Tree2D rightMaximum = (this.right != null) ? this.right.leafOfMaximumWeight(minCutDimension) : null;
 
-        // If one side is not valid (null), return the other.
         if (leftMaximum == null)
             return rightMaximum;
         if (rightMaximum == null)
             return leftMaximum;
 
-        // If both sides are valid, compare them together.
         Tree2D tree = Utils.maxWeightValue(leftMaximum, rightMaximum);
         if (tree != null)
             return tree;
 
-        // Determine the leaf of max weight from their coordinates.
         int comparison = Utils.highestLeftCoordinate(leftMaximum.topLeft, rightMaximum.topLeft);
         return (comparison == -1) ? leftMaximum : rightMaximum;
     }
@@ -124,7 +140,7 @@ public class Tree2D {
      * Colors an image a rectangle at a time.
      *
      * <p>
-     * <b>Complexity: O(n)</b> where {@code n} is the number of pixels.
+     * <b>Complexity: O(n)</b>, where {@code n} is the number of pixels.
      * </p>
      *
      * @param image     The image to progressively color.
@@ -132,17 +148,14 @@ public class Tree2D {
      * @return The colored image.
      */
     private Image colorImage(Image image, int lineWidth) {
-        // The tree is a leaf so we can color its section.
         if (this.isLeaf()) {
             image.setRectangle(this.topLeft.x, this.bottomRight.x, this.topLeft.y, this.bottomRight.y, this.color);
             return image;
         }
 
-        // Colorize its children.
         image = this.left.colorImage(image, lineWidth);
         image = this.right.colorImage(image, lineWidth);
 
-        // Draw a line of separation if the lineWidth is higher than 0.
         if (lineWidth > 0)
             this.drawSeparationLine(image, lineWidth);
 
@@ -151,6 +164,11 @@ public class Tree2D {
 
     /**
      * Draws a line of separation between rectangles.
+     *
+     * <p>
+     * <b>Complexity: depends on
+     * {@link Image#setRectangle(int, int, int, int, Color)}</b>.
+     * </p>
      *
      * @param image     The image to add a separation line.
      * @param lineWidth The width of the separation line.
@@ -206,6 +224,10 @@ public class Tree2D {
 
     /**
      * Formats the leaf color to its R, G, B representation.
+     *
+     * <p>
+     * <b>Complexity: O(1)</b>.
+     * </p>
      *
      * @return The formatted color.
      */

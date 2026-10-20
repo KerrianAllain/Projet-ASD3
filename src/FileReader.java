@@ -30,7 +30,8 @@ public class FileReader {
 
             Path file = Paths.get(path);
 
-            if (!Files.isRegularFile(file) || !file.getFileName().toString().endsWith(".txt"))
+            String filename = file.getFileName().toString();
+            if (!Files.isRegularFile(file) || !filename.endsWith(".txt"))
                 throw new IllegalArgumentException("Path: " + path + " is not a valid text file.");
 
             return file;
