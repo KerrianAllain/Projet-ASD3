@@ -31,9 +31,10 @@ public class Tree2D {
      * Builds the Tree2D from the given data.
      *
      * <p>
-     * <b>Complexity: Theta(n * m)</b>, where {@code n} is the number of lines to
+     * <b>Complexity: O(n²)</b><br>
+     * To be more specific, in <b>θ(n * m)</b>, where {@code n} is the number of lines to
      * process, and {@code m} is the complexity of
-     * {@link Tree2D#leafOfMaximumWeight(int)}.
+     * {@link Tree2D#leafOfMaximumWeight(int)} (which increases at each iteration of loop because of the insertions).
      * </p>
      *
      * @param nbLeavesToDivide The maximum number of leaves authorized.
